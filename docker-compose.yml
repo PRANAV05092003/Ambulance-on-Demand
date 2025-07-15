@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: aod-api
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - MONGODB_URI=mongodb://mongo:27017/ambulance_ondemand
+      - JWT_SECRET=your_jwt_secret_key_here
+      - GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
+      - FRONTEND_URL=http://localhost:3001
+      - EMAIL_HOST=smtp.example.com
+      - EMAIL_PORT=587
+      - EMAIL_USER=your_email@example.com
+      - EMAIL_PASSWORD=your_email_password
+      - EMAIL_FROM=no-reply@ambulanceondemand.com
+      - TWILIO_ACCOUNT_SID=your_twilio_account_sid
+      - TWILIO_AUTH_TOKEN=your_twilio_auth_token
+      - TWILIO_PHONE_NUMBER=your_twilio_phone_number
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    depends_on:
+      - mongo
+    networks:
+      - aod-network
+
+  mongo:
+    image: mongo:6.0
+    container_name: aod-mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+      MONGO_INITDB_DATABASE: ambulance_ondemand
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - aod-network
+
+  mongo-express:
+    image: mongo-express
+    container_name: aod-mongo-express
+    restart: always
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: example
+      ME_CONFIG_MONGODB_SERVER: mongo
+    depends_on:
+      - mongo
+    networks:
+      - aod-network
+
+networks:
+  aod-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
